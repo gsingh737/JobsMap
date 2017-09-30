@@ -1,15 +1,33 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Alert } from 'react-native';
 import {TabNavigator, StackNavigator} from 'react-navigation';
-
+import {Provider} from 'react-redux';
+import store from './store';
 import AuthScreen from './screens/AuthScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import MapScreen from './screens/MapScreen';
 import DeckScreen from './screens/DeckScreen';
 import SettingScreen from './screens/SettingsScreen';
 import ReviewScreen from './screens/ReviewScreen';
+import registerForNotifications from './services/push_notifications';
+import {Notifications} from 'expo';
 
 export default class App extends React.Component {
+    componentDidMount() {
+        registerForNotifications();
+        console.log()
+        Notifications.addListener((notification) => {
+            const {data: { text }, origin} = notification;
+            if(origin === 'received' && text) {
+                Alert.alert(
+                    'New Push Notification',
+                    text,
+                    [{text: 'Ok.'}]
+                );
+            }
+        });
+    }
+
   render() {
     const MainNavigator = TabNavigator({
        welcome: {screen: WelcomeScreen},
@@ -25,25 +43,30 @@ export default class App extends React.Component {
                   })
                 }
             },
-                {
-                  tabBarPosition: 'bottom',
-                    lazyLoad: true
-                }
-            )
+            {
+                tabBarPosition: 'bottom',
+                lazy: true,
+                animationEnabled: false,
+                swipeEnabled: false
+            })
         }
     },
-        {
-          tabBarPosition: 'bottom',
-            swipeEnabled: false,
-            lazyLoad: true,
-            animationEnabled: false
-        }
-    );
+    {
+        navigationOptions: {
+            tabBarVisible: false
+        },
+        tabBarPosition: 'bottom',
+        swipeEnabled: false,
+        lazy: true,
+        animationEnabled: false
+    });
 
     return (
-      <View style={styles.container}>
-          <MainNavigator/>
-      </View>
+        <Provider store={store}>
+            <View style={styles.container}>
+                <MainNavigator/>
+            </View>
+        </Provider>
     );
   }
 }
